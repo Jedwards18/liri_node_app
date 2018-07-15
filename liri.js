@@ -9,18 +9,16 @@ var fs = require("fs");
 
 liriCommand = process.argv[2];
 
+var searchTerm = process.argv.slice(3).join("+");
+
 function movieSearch(movie) {
 
-  var movieName = process.argv.slice(3).join("+");
-
-  //var movieName = movieName.split('').join("+");
-
-  if (movieName === '') {
-    movieName = 'Mr. Nobody';
+  if (searchTerm === '') {
+    searchTerm = 'Mr. Nobody';
   };
 
   //searchTerm = searchTerm.split('').join('+');
-  var queryUrl = "http://www.omdbapi.com/?apikey=trilogy&t=" + movieName + "&plot=full&tomatoes=true";
+  var queryUrl = "http://www.omdbapi.com/?apikey=trilogy&t=" + searchTerm + "&plot=full&tomatoes=true";
   console.log(queryUrl);
 
   request(queryUrl, function (error, response, body) {
@@ -28,17 +26,22 @@ function movieSearch(movie) {
       var data = JSON.parse(body);
       
       console.log("\n-------------------\n")
-      console.log("\nTitle: " + data.Title +
-      "\nRelease Year: " + data.Year +
-      "\nIMDB Rating: " + data.imdbRating +
-      "\nRotten Tomatoes Rating: " + data.tomatoRating +
-      "\nCountry Produced: " + data.Country +
-      "\nLanguage: " + data.Language +
-      "\nPlot: " + data.Plot +
-      "\nActors: " + data.Actors);
+      var movieResult = [
+        "\nTitle: " + data.Title,
+        "\nRelease Year: " + data.Year,
+        "\nIMDB Rating: " + data.imdbRating,
+        "\nRotten Tomatoes Rating: " + data.tomatoRating,
+        "\nCountry Produced: " + data.Country,
+        "\nLanguage: " + data.Language,
+        "\nPlot: " + data.Plot,
+        "\nActors: " + data.Actors,
+      ].join("\n\n");
     } else {
       console.log("An error has occured: " + error);
     }
+    fs.appendFile("log.txt", movieResult, function(err) {
+      console.log(movieResult);
+    })
   });
 };
 
@@ -50,30 +53,37 @@ function displayTweets() {
     access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
   });
    
-  var twitterUsername = process.argv[3];
+  //var twitterUsername = process.argv[3];
   
-  var params = {screen_name: twitterUsername};
-  client.get('statuses/user_timeline', params, function(error, tweets, response) {
-    if (!error) {
+  var params = {screen_name: searchTerm};
+  client.get('statuses/user_timeline', params, function(err, tweets, response) {
+    if (!err) {
       for (var i = 0; i < tweets.length; i++) {
         console.log("\n-------------------\n");
-        console.log("\nScreen Name: " + "@" + tweets[i].user.screen_name +
-        "\nTweet: " + tweets[i].text +
-        "\nCreated At: " + tweets[i].created_at);
+        var myTweets = [
+          "Screen Name: " + "@" + tweets[i].user.screen_name,
+          "Tweet: " + tweets[i].text,
+          "Created At: " + tweets[i].created_at,
+        ].join("\n\n");
       }
 
     } else {
       console.log("Error occured: " + err);
     }
+
+    fs.appendFile("log.txt", myTweets, function(err) {
+      if(err) throw(err);
+      console.log(myTweets);
+    })
   });
 }
 
 function spotifyThisSong() {
   
-  var songName = process.argv[3];
+  var songName = process.argv.slice(3).join("+");
 
-  if (songName === "") {
-    var songName = "The Sign";
+  if (searchTerm === "") {
+    var searchTerm = "The Sign";
   };
 
   var spotify = new Spotify({
@@ -86,15 +96,22 @@ function spotifyThisSong() {
       var songInfo = data.tracks.items;
       for (var i = 0; i < 5; i++) {
         console.log("\n-------------------\n")
-        console.log("\nArtist: " + songInfo[i].artists[0].name +
-        "\nSong: " + songInfo[i].name +
-        "\nAlbum The Song is From: " + songInfo[i].album.name +
-        "\nPreview Url: " + songInfo[i].preview_url);
-      }
+        var songResult = [
+        "Artist: " + songInfo[i].artists[0].name,
+        "Song: " + songInfo[i].name,
+        "Album The Song is From: " + songInfo[i].album.name,
+        "Preview Url: " + songInfo[i].preview_url,
+        ].join("\n\n");
+      };
       console.log(data.items);
     } else {
       return console.log('Error occurred: ' + err);
     }
+
+    fs.appendFile("log.txt", songResult, function(err) {
+      if(err) throw(err);
+      console.log(songResult);
+    })
   });
 }
 
